@@ -19,7 +19,8 @@ from .units import get_units
 
 
 def create_NWN(
-    wire_length: float = (7.0 / 7),
+    wire_length_mean: float = (7.0 / 7),
+    wire_length_sd: float = (7.0 / 7),
     size: Union[tuple, float] = (50.0 / 7),
     density: float = (0.3 * 7**2), 
     seed: int = None,
@@ -104,7 +105,9 @@ def create_NWN(
 
     # Create NWN graph
     NWN = nx.Graph(
-        wire_length = wire_length,
+        wire_length = wire_length_mean,
+        wire_length_mean = wire_length_mean,
+        wire_length_sd = wire_length_sd,
         length = length,
         width = width, 
         size = size,
@@ -125,10 +128,13 @@ def create_NWN(
     # Create seeded random generator for testing
     rng = np.random.default_rng(seed)
 
+    wire_lengths = np.random.normal(wire_length_mean, wire_length_sd, wire_num)
+
     # Add the wires as nodes to the graph
     for i in range(NWN.graph["wire_num"]):
         NWN.graph["lines"].append(create_line(
-            NWN.graph["wire_length"], 
+            # NWN.graph["wire_length"], 
+            wire_lengths[i], 
             xmax = NWN.graph["length"], 
             ymax = NWN.graph["width"], 
             rng = rng

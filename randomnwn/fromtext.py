@@ -80,6 +80,8 @@ def create_NWN_from_txt(
     # Create NWN graph
     NWN = nx.Graph(
         wire_length = None,
+        wire_length_mean = None,
+        wire_length_sd = None,
         length = length,
         width = width, 
         size = size,
