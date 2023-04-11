@@ -15,12 +15,13 @@ import matplotlib as mpl
 from typing import Tuple
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
-
+from itertools import zip_longest
 
 def plot_NWN(
     NWN: nx.Graph, 
     intersections: bool = True, 
     rnd_color: bool = False,
+    color: np.ndarray = None,
     scaled: bool = False,
     grid: bool = True,
     xlabel: str = "",
@@ -41,6 +42,9 @@ def plot_NWN(
     rnd_color : bool, optional
         Whether or not to randomize the colors of the plotted lines.
         Defaults to false.
+    
+    color : ndarray, optional
+        Color value assigned to lines
 
     scaled: bool, optional
         Whether or not to scale the plot by the characteristic values of the
@@ -75,7 +79,13 @@ def plot_NWN(
         )
 
     # Defaults to blue and pink lines, else random colors are used.
-    if rnd_color:
+    if color is not None:
+        c_map = mpl.cm.get_cmap('plasma').copy()
+        norm = mpl.colors.Normalize(vmin=np.nanmin(color), vmax=max(np.nanmax(color), 0.1))
+        color = c_map(norm(color))
+        for i in range(NWN.graph["wire_num"]):
+            ax.plot(*np.array(NWN.graph["lines"][i]).T, c=color[i])
+    elif rnd_color:
         for i in range(NWN.graph["wire_num"]):
             ax.plot(*np.array(NWN.graph["lines"][i]).T)
     else:
@@ -221,3 +231,72 @@ def draw_NWN(
     plt.show()
     return fig, ax
 
+
+def plot_NWN_sections(
+    NWN: nx.Graph, 
+    section_current: list[list],
+    scaled: bool = False,
+    grid: bool = True,
+    xlabel: str = "",
+    ylabel: str = "",
+) -> Tuple[Figure, Axes]:
+    
+    fig, ax = plt.subplots(figsize=(8, 6))
+    l0 = NWN.graph["units"]["l0"]
+    
+    # Intersections
+    ax.scatter(
+        *np.array([(point.x, point.y) for point in NWN.graph["loc"].values()]).T, 
+        zorder=10, s=5, c="blue"
+    )
+    
+    # Lines
+    for i in range(NWN.graph["wire_num"]):
+        if (i,) in NWN.graph["electrode_list"]:
+            ax.plot(*np.array(NWN.graph["lines"][i]).T, c="xkcd:light blue")
+        else:
+            ax.plot(*np.array(NWN.graph["lines"][i]).T, c="pink", alpha=0.6)
+    
+    min_current, max_current = np.inf, -np.inf
+    for l_c in section_current:
+        for c in l_c:
+            if c < min_current: min_current = c
+            if c > max_current: max_current = c
+    
+    c_map = mpl.cm.get_cmap('YlOrRd').copy()
+    norm = mpl.colors.Normalize(vmin=min_current, vmax=max(max_current, min_current+1e-10))
+            
+    # Section currents on top
+    for i in range(NWN.graph["wire_num"]):
+        if (i,) in NWN.graph["electrode_list"]: continue
+
+        point_coords = []
+        for intersected_line in NWN.graph['section_point'][i]:
+            intersect_point = NWN.graph['loc'].get((i, intersected_line), None) or NWN.graph['loc'].get((intersected_line, i), None)
+            point_coords.append(intersect_point.coords[0])
+        
+        for s in range(len(section_current[i])):
+            ax.plot(
+                [point_coords[s][0], point_coords[s+1][0]],
+                [point_coords[s][1], point_coords[s+1][1]],
+                c=c_map(norm(section_current[i][s])),
+            )
+        
+        
+    
+    # Scale axes according to the characteristic values
+    if scaled:
+        ax.xaxis.set_major_formatter(
+            ticker.FuncFormatter(lambda x, pos: f"{x * l0:.3g}")
+        )
+        ax.yaxis.set_major_formatter(
+            ticker.FuncFormatter(lambda y, pos: f"{y * l0:.3g}")
+        )
+        
+    # Other attributes
+    if grid: 
+        ax.grid(alpha=0.25)
+    if xlabel: 
+        ax.set_xlabel(xlabel)
+    if ylabel: 
+        ax.set_ylabel(ylabel)

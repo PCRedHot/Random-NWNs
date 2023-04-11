@@ -18,6 +18,7 @@ from .nanowires import (
     add_wires,
     add_electrodes,
     get_edge_indices,
+    create_line_sections,
 )
 
 from .line_functions import (
@@ -35,11 +36,13 @@ from .calculations import (
     solve_nodal_current,
     solve_edge_current,
     scale_sol,
+    get_section_current,
 )
 
 from .plotting import (
     plot_NWN,
     draw_NWN,
+    plot_NWN_sections,
 )
 
 from .dynamics import (

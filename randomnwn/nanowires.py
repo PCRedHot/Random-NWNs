@@ -161,9 +161,25 @@ def create_NWN(
     NWN.graph["node_indices"] = {
         node: ind for ind, node in enumerate(sorted(NWN.nodes()))
     }
-
+    
     return NWN
 
+
+def create_line_sections(NWN: nx.Graph):
+    # Create Line Section
+    section_dict = {}
+    for i in range(NWN.graph["wire_num"]):
+        o1, o2 = NWN.graph['lines'][i].coords
+        o1 = np.array(o1)
+        o2 = np.array(o2)
+        interesct_points = {np.linalg.norm(np.array(p.coords[0]) - o1): com[0] if com[1] == i else com[1] for com, p in NWN.graph['loc'].items() if i in com}
+        
+        section_dict[i] = [interesct_points[d] for d in sorted(interesct_points.keys())]
+    NWN.graph['section_point'] = section_dict
+    
+    return NWN
+    
+    
 
 def convert_NWN_to_MNR(NWN: nx.Graph):
     """

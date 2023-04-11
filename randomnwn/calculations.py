@@ -478,3 +478,24 @@ def scale_sol(NWN: nx.Graph, sol: np.ndarray):
 
     return out
 
+def get_section_current(NWN: nx.Graph, voltages: np.ndarray, abs_val=False):
+    section_currents = []
+    for i in range(NWN.graph["wire_num"]):
+        intersected_lines = np.array(NWN.graph['section_point'][i])
+        if len(intersected_lines) == 0:
+            section_currents.append([])        
+            continue
+        intersected_line_voltages = voltages[intersected_lines]
+        
+        intersect_dV = intersected_line_voltages - voltages[i]
+        
+        section_current = []
+        sum_current = intersect_dV[0]
+        for s_i in range(1, len(intersect_dV)):
+            section_current.append(sum_current)
+            sum_current += intersect_dV[s_i]
+        if abs_val:
+            section_current = [abs(c) for c in section_current]
+        section_currents.append(section_current)
+    
+    return section_currents     
