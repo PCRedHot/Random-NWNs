@@ -128,7 +128,7 @@ def create_NWN(
     # Create seeded random generator for testing
     rng = np.random.default_rng(seed)
 
-    wire_lengths = np.random.normal(wire_length_mean, wire_length_sd, wire_num)
+    wire_lengths = rng.normal(wire_length_mean, wire_length_sd, wire_num)
 
     # Add the wires as nodes to the graph
     for i in range(NWN.graph["wire_num"]):
